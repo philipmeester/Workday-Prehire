@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1881f4a9-4171-4538-9d41-d4c2e0bc63b3" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="32610acd-c8d4-43ce-bb12-08940d39a43c">
+		<http:request-connection host="services1.myworkday.com" protocol="HTTPS">
+			<http:authentication >
+				<http:basic-authentication username="ISU_INT003_Mulesoft" password="g5zCiVG!3pCqppKgvAulp#" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<flow name="test-muleFlow" doc:id="4fba9e31-cc90-4c79-bbf8-5dd38a1ee1c6" >
+		<scheduler doc:name="Scheduler" doc:id="4a86a7fd-19ad-4263-8a53-2250357c7464" >
+			<scheduling-strategy >
+				<fixed-frequency startDelay="2" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<http:request method="GET" doc:name="Request" doc:id="c1b8f57b-19cc-4d9b-8200-84c0e3bb5a70" config-ref="HTTP_Request_configuration" path="/ccx/service/customreport2/wellsky/Stephanie.Bartlett/PreHire_Data-_Mulesoft">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"Effective_End_Date_Range" : "2023-05-15",
+	"Effective_Start_Date_Range" : "2023-05-04",
+	"format" : "JSON"
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="ab2ed81d-bf75-47ea-a9b5-e5f7ee7f612a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+	payload map ((item, index) -> {
+    "Organization_Ref_ID": item.Organization_Ref_ID,
+    "Street_Address": item.Street_Address,
+    "Email": item.Email,
+    "Manager_ID": item.Manager_ID,
+    "Title": item.Title,
+    "City": item.City,
+    "First_Name": item.First_Name,
+    "Last_Name": item.Last_Name,
+    "State": item.State,
+    "Job_Profile_ID": item.Job_Profile_ID,
+    "Is_Manager": item.Is_Manager,
+    "Postal_Code": item.Postal_Code,
+    "Country": item.Country,
+    "Start_Date": item.Start_Date,
+    "User_ID": item.User_ID
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="3e310af5-ffa4-42d3-8626-e1bdce6a3aec" message='#[payload]' />
+	</flow>
+</mule>
